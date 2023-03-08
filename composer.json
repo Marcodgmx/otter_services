@@ -1,0 +1,17 @@
+{
+    "name": "marco/otter_services",
+    "autoload": {
+        "psr-4": {
+            "Marco\\OtterServices\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "MarcoBerumen",
+            "email": "89665061+MarcoBerumen@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "slim/slim": "3.*"
+    }
+}
