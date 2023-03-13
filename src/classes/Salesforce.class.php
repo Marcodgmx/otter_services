@@ -1,16 +1,43 @@
 <?php
+require("../classes/Pardot.class.php");
 
 class Salesforce {
-  private $refreshToken = "5Aep861ckn.CqYCOXzgB9sB.hP681jQeQ0zDvyNiAvdqqF9.dly6BtPQBigHuFTYPpwO._ant8RFTwR_I50mx_L";
-  private $clientID = "3MVG9PE4xB9wtoY_i29RD53K7wV4iRrkf4NynZeTsKOYruo2RQ0D_6dr12FImAUgvcenouYdkXOQinvRiGm2e";
-  private $consumerSecret = "724F096622B73D8049DA29E62D40FEE4DDCA8F026A885D8742C5ADBCD70B1A18";
-  private function getAccessToken(){
+  private String $env;
+  private String $refreshToken;
+  private String $clientID;
+  private String $consumerSecret;
+  public Pardot $Pardot;
+  private String $accessToken;
+  private Array $config = array(
+    "instance_url"=> array(
+        "PRODUCTION"=> "https://otr-hub.my.salesforce.com",
+        "STAGING" => "https://otr-hub--fullsbuat.sandbox.my.salesforce.com"
+    ),
+    "login_url" => array(
+        "PRODUCTION"=> "https://login.salesforce.com",
+        "STAGING" => "https://test.salesforce.com"
+    )
+  );
+  
+
+function __construct(String $env){
+    $this->env = strtoupper($env);
+    $this->refreshToken = $_ENV["SALESFORCE_REFRESHTOKEN_".$this->env];
+    $this->clientID = $_ENV["SALESFORCE_CLIENTID_".$this->env];
+    $this->consumerSecret = $_ENV["SALESFORCE_SECRET_".$this->env];
+    $this->accessToken = $this->getAccessToken();
+    $this->Pardot = new Pardot($this->env, $this->accessToken);
+  }
+ 
+  public function getAccessToken(){
+
+    $service = "/services/oauth2/token";
 
     $data = "refresh_token=".$this->refreshToken."&grant_type=refresh_token&client_id=".$this->clientID."&client_secret=".$this->consumerSecret;
 
     $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://test.salesforce.com/services/oauth2/token",
+            CURLOPT_URL => $this->config["instance_url"][$this->env] . $service,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -36,8 +63,6 @@ class Salesforce {
   public function createLead($lead){
       $curl = curl_init();
 
-      $accessToken = $this->getAccessToken();
-;
 
             curl_setopt_array($curl, array(
             CURLOPT_URL => "https://otr-hub--fullsbuat.sandbox.my.salesforce.com"."/services/data/v53.0/sobjects/Lead/",
@@ -50,7 +75,7 @@ class Salesforce {
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => json_encode($lead, JSON_FORCE_OBJECT),
             CURLOPT_HTTPHEADER => array(
-                'Authorization: Bearer '.$accessToken,
+                'Authorization: Bearer '.$this->accessToken,
                 'Content-Type: application/json'
             ),
             ));
@@ -58,8 +83,10 @@ class Salesforce {
             
             $response = curl_exec($curl);
             curl_close($curl);
+
             $json = json_decode($response, true);
 
             return $json;
   }
+
 }
